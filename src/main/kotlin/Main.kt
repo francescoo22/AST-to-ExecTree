@@ -23,11 +23,21 @@ fun main() {
         Minus(Var("a"), Var("b"))
     )
 
-    val test = createExecTreeNodes(fooBarAst)
-    val test2 = createExecTreeNodes(prog1)
+    val prog2 = Block(
+        Let (Var("a"), Const(1)),
+        Let (Var("b"), Const(2)),
+        Let (Var("x"), Plus(Var("a"), Var("b"))),
+        Let (Var("y"), Minus(Var("x"), Const(5))),
+        Minus(Var("a"), Var("b"))
+    )
+
+    val fooBarParams = HashMap<String, Expr>()
+    fooBarParams["a"] = SymVal("a")
+    fooBarParams["b"] = SymVal("b")
+    val test = createExecTreeNodes(fooBarAst, fooBarParams)
+    val test2 = createExecTreeNodes(prog1, HashMap())
+    val test3 = createExecTreeNodes(prog2, HashMap())
     printTree(test)
     printTree(test2)
-//    prettyPrintExecTree(test)
-//    println("----------------")
-//    prettyPrintExecTree(test2)
+    printTree(test3)
 }

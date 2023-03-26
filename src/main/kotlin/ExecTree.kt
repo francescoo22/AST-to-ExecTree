@@ -2,12 +2,12 @@ data class ExecTreeNode(
     var thenChild: ExecTreeNode?,
     var elseChild: ExecTreeNode?,
     val nextExpr: Expr,
-    val S: List<Expr>,
+    val env: HashMap<String, Expr> = hashMapOf(),
     val Pi: List<Expr>,
     val isCond: Boolean = false
 ) {
     override fun toString(): String {
-        return "next: $nextExpr | pi: $Pi"
+        return "next: $nextExpr | pi: $Pi | S: $env"
     }
 
     // si può fare easy senza mutable
@@ -30,7 +30,7 @@ data class ExecTreeNode(
     }
 }
 
-fun createExecTreeNodes(expr : Expr, pi : List<Expr> = listOf()) : ExecTreeNode {
+fun createExecTreeNodes(expr : Expr, env: HashMap<String, Expr>, pi : List<Expr> = listOf()) : ExecTreeNode {
     when (expr){
         is Block -> {
             var prev : ExecTreeNode? = null
@@ -38,31 +38,43 @@ fun createExecTreeNodes(expr : Expr, pi : List<Expr> = listOf()) : ExecTreeNode 
                 if (prev != null){
                     val leafs = prev.getLeafs()
                     for (leaf in leafs){
+                        val newMap = HashMap(leaf.env)
+                        if (leaf.nextExpr is Let){
+                            val result = evalExpr(leaf.nextExpr.value, leaf.env)
+                            newMap[leaf.nextExpr.variable.name] = result
+                        }
                         if(leaf.isCond)
-                            leaf.elseChild = createExecTreeNodes(blockExpr, leaf.Pi + listOf(negation(leaf.nextExpr)))
-                        else leaf.thenChild = createExecTreeNodes(blockExpr, leaf.Pi)
+                            leaf.elseChild = createExecTreeNodes(blockExpr, newMap, leaf.Pi + listOf(negation(leaf.nextExpr)))
+                        else leaf.thenChild = createExecTreeNodes(blockExpr, newMap, leaf.Pi)
                     }
                 } else {
-                    prev = createExecTreeNodes(blockExpr, pi)
+                    prev = createExecTreeNodes(blockExpr, HashMap(env), pi)
                 }
 
             }
             return if (prev == null){
-                ExecTreeNode(null, null, Block(), listOf(), pi)
+                // empty block
+                ExecTreeNode(null, null, Block(), HashMap(env), pi)
             } else {
                 prev
             }
         }
         is If -> {
-            val thenChild = createExecTreeNodes(expr.thenExpr, pi + listOf(expr.cond))
+            val thenChild = createExecTreeNodes(expr.thenExpr, HashMap(env), pi + listOf(expr.cond))
             if (expr.elseExpr != null){
-                val elseChild = createExecTreeNodes(expr.elseExpr, pi + listOf(negation(expr.cond)))
-                return ExecTreeNode(thenChild, elseChild, expr.cond, listOf(), pi, true)
+                val elseChild = createExecTreeNodes(expr.elseExpr, HashMap(env), pi + listOf(negation(expr.cond)))
+                return ExecTreeNode(thenChild, elseChild, expr.cond, HashMap(env), pi, true)
             }
-            return ExecTreeNode(thenChild, null, expr.cond, listOf(), pi, true)
+            return ExecTreeNode(thenChild, null, expr.cond, HashMap(env), pi, true)
         }
+//        is Let -> {
+//            val result = evalExpr(expr.value, HashMap(env))
+//            val newMap = HashMap(HashMap(env))
+//            newMap[expr.variable.name] = result
+//            return ExecTreeNode(null, null, expr, , pi)
+//        }
         else -> {
-            return ExecTreeNode(null, null, expr, listOf(), pi)
+            return ExecTreeNode(null, null, expr, HashMap(env), pi)
         }
     }
 }
