@@ -83,18 +83,18 @@ fun printSubtree (root: ExecTreeNode?, prefix: String){
     if (!hasLeft && !hasRight) return
 
     print(prefix)
-    if(hasLeft && hasRight) print("├── ")
-    if(!hasLeft && hasRight) print("├── ")
-
-    if(hasRight){
-        val printStrand = (hasLeft && hasRight && (root.elseChild?.elseChild != null || root.elseChild?.thenChild != null))
-        val newPrefix = prefix + (if (printStrand) "│   " else "    ")
-        println(root.elseChild)
-        printSubtree(root.elseChild, newPrefix);
-    }
+    if(hasRight && hasLeft) print("├── ")
+    if(!hasRight) print("└── ")
 
     if(hasLeft){
-        println ((if(hasRight) prefix else "") + "└── " + root.thenChild)
-        printSubtree(root.thenChild, prefix + "    ");
+        val printStrand = (hasRight && (root.thenChild?.thenChild != null || root.thenChild?.elseChild != null))
+        val newPrefix = prefix + (if (printStrand) "│   " else "    ")
+        println(root.thenChild)
+        printSubtree(root.thenChild, newPrefix);
+    }
+
+    if(hasRight){
+        println ((if(hasLeft) prefix else "") + "└── " + root.elseChild)
+        printSubtree(root.elseChild, "$prefix    ");
     }
 }
