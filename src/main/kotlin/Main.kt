@@ -25,7 +25,9 @@ fun main() {
 
     val test = createExecTreeNodes(fooBarAst)
     val test2 = createExecTreeNodes(prog1)
-    prettyPrintExecTree(test)
-    println("----------------")
-    prettyPrintExecTree(test2)
+    printTree(test)
+    printTree(test2)
+//    prettyPrintExecTree(test)
+//    println("----------------")
+//    prettyPrintExecTree(test2)
 }

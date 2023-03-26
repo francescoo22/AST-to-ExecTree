@@ -17,8 +17,6 @@ data class Mul(val left: Expr, val right: Expr) : Expr()
 data class SymVal(val name: String) : Expr()
 
 data class ExecTreeNode(
-    // if children.size == 2 -> the first is the then branch and the second is the else
-//    val children: MutableList<ExecTreeNode>,
     var thenChild: ExecTreeNode?,
     var elseChild: ExecTreeNode?,
     val nextExpr: Expr,
@@ -30,8 +28,8 @@ data class ExecTreeNode(
 // si può fare easy senza mutable
 fun getLeafs(root : ExecTreeNode) : MutableList<ExecTreeNode> {
     val leafs :  MutableList<ExecTreeNode> = mutableListOf()
-    if (root.thenChild == null){
-        return mutableListOf(root)
+    return if (root.thenChild == null){
+        mutableListOf(root)
     } else {
         if (root.isCond && root.elseChild == null){
             leafs.add(root)
@@ -41,22 +39,12 @@ fun getLeafs(root : ExecTreeNode) : MutableList<ExecTreeNode> {
         if (root.elseChild != null){
             leafs.addAll(getLeafs(root.elseChild!!))
         }
-        return leafs
+        leafs
 
     }
-//    if (root.children.isEmpty()){
-//        return mutableListOf(root)
-//    }
-//    for (child in root.children){
-//        // special case for conditions without else branch
-//        if(child.children.size == 1 && child.isCond){
-//            leafs.add(root)
-//        }
-//        leafs.addAll(getLeafs(child))
-//    }
-//    return leafs
 }
 
+// param , pi : List<Expr>
 fun createExecTreeNodes(expr : Expr) : ExecTreeNode {
     when (expr){
         is Block -> {
@@ -65,21 +53,18 @@ fun createExecTreeNodes(expr : Expr) : ExecTreeNode {
                 if (prev != null){
                     val leafs = getLeafs(prev)
                     for (leaf in leafs){
-                        if(leaf.isCond){
-                            leaf.elseChild = createExecTreeNodes(blockExpr)
-                        } else {
-                            leaf.thenChild = createExecTreeNodes(blockExpr)
-                        }
+                        if(leaf.isCond)  leaf.elseChild = createExecTreeNodes(blockExpr)
+                        else leaf.thenChild = createExecTreeNodes(blockExpr)
                     }
                 } else {
                     prev = createExecTreeNodes(blockExpr)
                 }
 
             }
-            if (prev == null){
-                return ExecTreeNode(null, null, Block(), listOf(), listOf())
+            return if (prev == null){
+                ExecTreeNode(null, null, Block(), listOf(), listOf())
             } else {
-                return prev
+                prev
             }
         }
         is If -> {
@@ -96,8 +81,34 @@ fun createExecTreeNodes(expr : Expr) : ExecTreeNode {
     }
 }
 
-fun prettyPrintExecTree(node : ExecTreeNode , indent : String = "") {
-    println(indent + node.nextExpr.toString())
-    if(node.thenChild != null) prettyPrintExecTree(node.thenChild!!, indent + "  ")
-    if(node.elseChild != null) prettyPrintExecTree(node.elseChild!!, indent + "  ")
+fun printTree(root: ExecTreeNode?){
+    if (root == null) return
+
+    println(root.nextExpr)
+    printSubtree(root, "")
+    print("\n")
+}
+
+fun printSubtree (root: ExecTreeNode?, prefix: String){
+    if(root == null) return
+
+    val hasLeft = root.thenChild != null
+    val hasRight = root.elseChild != null
+    if (!hasLeft && !hasRight) return
+
+    print(prefix)
+    if(hasLeft && hasRight) print("├── ")
+    if(!hasLeft && hasRight) print("├── ")
+
+    if(hasRight){
+        val printStrand = (hasLeft && hasRight && (root.elseChild?.elseChild != null || root.elseChild?.thenChild != null))
+        val newPrefix = prefix + (if (printStrand) "│   " else "    ")
+        println(root.elseChild?.nextExpr)
+        printSubtree(root.elseChild, newPrefix);
+    }
+
+    if(hasLeft){
+        println ((if(hasRight) prefix else "") + "└── " + root.thenChild?.nextExpr)
+        printSubtree(root.thenChild, prefix + "    ");
+    }
 }
