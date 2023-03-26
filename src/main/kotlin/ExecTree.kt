@@ -9,24 +9,24 @@ data class ExecTreeNode(
     override fun toString(): String {
         return "next: $nextExpr | pi: $Pi"
     }
-}
 
-// si può fare easy senza mutable
-fun getLeafs(root : ExecTreeNode) : MutableList<ExecTreeNode> {
-    val leafs :  MutableList<ExecTreeNode> = mutableListOf()
-    return if (root.thenChild == null){
-        mutableListOf(root)
-    } else {
-        if (root.isCond && root.elseChild == null){
-            leafs.add(root)
+    // si può fare easy senza mutable
+    fun getLeafs() : MutableList<ExecTreeNode> {
+        val leafs :  MutableList<ExecTreeNode> = mutableListOf()
+        return if (this.thenChild == null){
+            mutableListOf(this)
+        } else {
+            if (this.isCond && this.elseChild == null){
+                leafs.add(this)
+            }
+
+            leafs.addAll(this.thenChild!!.getLeafs())
+            if (this.elseChild != null){
+                leafs.addAll(this.elseChild!!.getLeafs())
+            }
+            leafs
+
         }
-
-        leafs.addAll(getLeafs(root.thenChild!!))
-        if (root.elseChild != null){
-            leafs.addAll(getLeafs(root.elseChild!!))
-        }
-        leafs
-
     }
 }
 
@@ -36,11 +36,11 @@ fun createExecTreeNodes(expr : Expr, pi : List<Expr> = listOf()) : ExecTreeNode 
             var prev : ExecTreeNode? = null
             for (blockExpr in expr.exprs){
                 if (prev != null){
-                    val leafs = getLeafs(prev)
+                    val leafs = prev.getLeafs()
                     for (leaf in leafs){
                         if(leaf.isCond)
-                            leaf.elseChild = createExecTreeNodes(blockExpr, pi + listOf(negation(leaf.nextExpr)))
-                        else leaf.thenChild = createExecTreeNodes(blockExpr, pi)
+                            leaf.elseChild = createExecTreeNodes(blockExpr, leaf.Pi + listOf(negation(leaf.nextExpr)))
+                        else leaf.thenChild = createExecTreeNodes(blockExpr, leaf.Pi)
                     }
                 } else {
                     prev = createExecTreeNodes(blockExpr, pi)
