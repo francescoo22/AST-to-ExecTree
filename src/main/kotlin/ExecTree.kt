@@ -7,10 +7,13 @@ data class ExecTreeNode(
     val isCond: Boolean = false
 ) {
     override fun toString(): String {
-        return "next: $nextExpr | pi: $Pi | S: $env"
+        val red = "\u001b[31m"
+        val blue = "\u001b[34m"
+        val magenta = "\u001b[35m"
+        val reset = "\u001b[0m"
+        return magenta + "next: $nextExpr $reset|$red pi: $Pi $reset|$blue S: $env $reset"
     }
 
-    // si può fare easy senza mutable
     fun getLeafs() : MutableList<ExecTreeNode> {
         val leafs :  MutableList<ExecTreeNode> = mutableListOf()
         return if (this.thenChild == null){
@@ -67,12 +70,6 @@ fun createExecTreeNodes(expr : Expr, env: HashMap<String, Expr>, pi : List<Expr>
             }
             return ExecTreeNode(thenChild, null, expr.cond, HashMap(env), pi, true)
         }
-//        is Let -> {
-//            val result = evalExpr(expr.value, HashMap(env))
-//            val newMap = HashMap(HashMap(env))
-//            newMap[expr.variable.name] = result
-//            return ExecTreeNode(null, null, expr, , pi)
-//        }
         else -> {
             return ExecTreeNode(null, null, expr, HashMap(env), pi)
         }
@@ -102,11 +99,11 @@ fun printSubtree (root: ExecTreeNode?, prefix: String){
         val printStrand = (hasRight && (root.thenChild?.thenChild != null || root.thenChild?.elseChild != null))
         val newPrefix = prefix + (if (printStrand) "│   " else "    ")
         println(root.thenChild)
-        printSubtree(root.thenChild, newPrefix);
+        printSubtree(root.thenChild, newPrefix)
     }
 
     if(hasRight){
         println ((if(hasLeft) prefix else "") + "└── " + root.elseChild)
-        printSubtree(root.elseChild, "$prefix    ");
+        printSubtree(root.elseChild, "$prefix    ")
     }
 }
