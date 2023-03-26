@@ -37,6 +37,12 @@ data class SymVal(val name: String) : Expr(){
 }
 
 fun negation (expr: Expr): Expr{
+    /**
+     * function that given a condition expression returns its negation
+     * @param expr must be a condition expression
+     * @return the negation of the given expression
+     * @throws Exception if the given expression is not a condition expression
+     */
     return when(expr){
         is Eq -> NEq(expr.left, expr.right)
         is NEq -> Eq(expr.left, expr.right)
@@ -45,6 +51,12 @@ fun negation (expr: Expr): Expr{
 }
 
 fun evalExpr(expr: Expr, env: HashMap<String, Expr>): Expr{
+    /**
+     * function that evaluates an expression given an environment
+     * @param expr the expression to evaluate
+     * @param env the environment to use
+     * @return a Const expression if the expression can be evaluated (there are no symbolic variables), the original expression otherwise
+     */
     when(expr){
         is Var -> {
             return env[expr.name]!!

@@ -7,6 +7,10 @@ data class ExecTreeNode(
     val isCond: Boolean = false
 ) {
     override fun toString(): String {
+        /**
+         * function used to pretty print the ExecTreeNode with colors
+         * @return a string representing the ExecTreeNode
+         */
         val red = "\u001b[31m"
         val blue = "\u001b[34m"
         val magenta = "\u001b[35m"
@@ -15,11 +19,16 @@ data class ExecTreeNode(
     }
 
     fun getLeafs() : MutableList<ExecTreeNode> {
+        /**
+         * function that returns all the leafs of the ExecTreeNode
+         * @return a mutable list of ExecTreeNode that are leafs of the current ExecTreeNode
+         */
         val leafs :  MutableList<ExecTreeNode> = mutableListOf()
         return if (this.thenChild == null){
             mutableListOf(this)
         } else {
             if (this.isCond && this.elseChild == null){
+                // even if this is not a leaf, I need to add it because is an if without else
                 leafs.add(this)
             }
 
@@ -34,8 +43,19 @@ data class ExecTreeNode(
 }
 
 fun createExecTreeNodes(expr : Expr, env: HashMap<String, Expr>, pi : List<Expr> = listOf()) : ExecTreeNode {
+    /**
+     * function that creates an ExecTreeNode from an expression and an environment,
+     * the function uses recursive pattern matching on the expression to create the ExecTreeNode
+     * @param expr the expression to use
+     * @param env if the expression uses parameters, they must be in the environment as SymVal
+     * @param pi the pi list to use
+     * @return the ExecTreeNode created
+     */
     when (expr){
         is Block -> {
+            // I loop through the block expressions and
+            // at each iteration I create a new ExecTreeNode from the leafs of the previous iteration
+            // prev is always the previous iteration ExecTreeNode
             var prev : ExecTreeNode? = null
             for (blockExpr in expr.exprs){
                 if (prev != null){
@@ -43,10 +63,12 @@ fun createExecTreeNodes(expr : Expr, env: HashMap<String, Expr>, pi : List<Expr>
                     for (leaf in leafs){
                         val newMap = HashMap(leaf.env)
                         if (leaf.nextExpr is Let){
+                            // if the next expression is a let, I evaluate the value and add it to the environment
                             val result = evalExpr(leaf.nextExpr.value, leaf.env)
                             newMap[leaf.nextExpr.variable.name] = result
                         }
                         if(leaf.isCond)
+                            // if the leaf is a condition without else, I add the negation of the condition to the pi list
                             leaf.elseChild = createExecTreeNodes(blockExpr, newMap, leaf.Pi + listOf(negation(leaf.nextExpr)))
                         else leaf.thenChild = createExecTreeNodes(blockExpr, newMap, leaf.Pi)
                     }

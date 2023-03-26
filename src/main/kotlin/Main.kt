@@ -1,4 +1,9 @@
 fun main() {
+    /**
+     * There are 3 AST program examples which are converted to ExecTreeNodes and printed.
+     * One of them is the example from the paper.
+     * Note that for the FooBar example, the parameters a and b are passed as a map to the createExecTreeNodes function.
+     */
     val fooBarAst = Block(
         Let(Var("x"), Const(1)),
         Let(Var("y"), Const(0)),
@@ -31,13 +36,21 @@ fun main() {
         Minus(Var("a"), Var("b"))
     )
 
+    // FooBar example
     val fooBarParams = HashMap<String, Expr>()
     fooBarParams["a"] = SymVal("a")
     fooBarParams["b"] = SymVal("b")
     val test = createExecTreeNodes(fooBarAst, fooBarParams)
-    val test2 = createExecTreeNodes(prog1, HashMap())
-    val test3 = createExecTreeNodes(prog2, HashMap())
+    println("FooBar example:")
     printTree(test)
+
+    // Prog1 example
+    val test2 = createExecTreeNodes(prog1, HashMap())
+    println("Prog1 example:")
     printTree(test2)
+
+    // Prog2 example
+    val test3 = createExecTreeNodes(prog2, HashMap())
+    println("Prog2 example:")
     printTree(test3)
 }
